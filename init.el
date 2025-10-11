@@ -1,4 +1,4 @@
-;;;; TIOT2 EMACS CONFIG "init.el" FILE
+;;; init.el --- TioT2 Emacs configuration main file
 
 ;; Setup custom variables
 (custom-set-variables
@@ -17,12 +17,20 @@
 ;; Add package source repositories
 (use-package package
   :config
+
+  ;; Add package archives (org, melpa, melpa-stable)
   (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
   (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
-  (package-initialize))
+  (package-initialize)
 
-
+  ;; Prioritize stability over recency for packages
+  (setq package-archive-priorities
+	'(("gnu"          . 50)
+	  ("nongnu"       . 40)
+	  ("melpa-stable" . 30)
+	  ("melpa"        . 20)
+	  ("org"          . 10))))
 
 ;; Install EVIL package
 (use-package evil
@@ -39,8 +47,10 @@
 ;; Remap ':q' and ':wq' commands to not terminate EMACS instance
 (evil-ex-define-cmd "q" 'kill-current-buffer)
 (evil-ex-define-cmd "wq" (lambda ()
-			   (interactive)
 			   (save-buffer)
 			   (kill-current-buffer)))
 
-; init.el
+;; Disable EMACS backup files
+(setq make-backup-files nil)
+
+;;; init.el ends here
