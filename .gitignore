@@ -1,0 +1,8 @@
+# EMACS configuration .gitignore
+
+# Exclude *ALL*
+*
+
+# Allowed things
+!init.el
+!.gitignore
