@@ -22,6 +22,8 @@
   (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
   (package-initialize))
 
+
+
 ;; Install EVIL package
 (use-package evil
   :ensure t
@@ -33,5 +35,12 @@
   :ensure t
   :config
   (evil-commentary-mode))
+
+;; Remap ':q' and ':wq' commands to not terminate EMACS instance
+(evil-ex-define-cmd "q" 'kill-current-buffer)
+(evil-ex-define-cmd "wq" (lambda ()
+			   (interactive)
+			   (save-buffer)
+			   (kill-current-buffer)))
 
 ; init.el
