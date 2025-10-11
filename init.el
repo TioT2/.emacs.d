@@ -6,7 +6,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(package-selected-packages '(evil evil-commentary)))
+ '(package-selected-packages nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -32,17 +32,31 @@
 	  ("melpa"        . 20)
 	  ("org"          . 10))))
 
-;; Install EVIL package
+
+;; Make evil-collection happy
+(setq evil-want-keybinding nil)
+
+;; Install EVIL (Extensible VI Layer) package
 (use-package evil
   :ensure t
   :config
   (evil-mode t))
 
-;; Install comment additions to EVIL mode
+;; Install commenting utilities for to EVIL mode
 (use-package evil-commentary
   :ensure t
   :config
   (evil-commentary-mode))
+
+;; Install package that enables EVIL-flavoured keymap in ORG, Magit, etc.
+(use-package evil-collection
+  :ensure t
+  :config
+  (evil-collection-init))
+
+;; Install Magit
+(use-package magit
+  :ensure t)
 
 ;; Remap ':q' and ':wq' commands to not terminate EMACS instance
 (evil-ex-define-cmd "q" 'kill-current-buffer)
