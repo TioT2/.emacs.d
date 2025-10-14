@@ -1,4 +1,4 @@
-;;; init.el --- TioT2 Emacs configuration main file
+;;; init.el --- TioT2 Emacs configuration main file -*- lexical-binding:t -*-
 
 ;; Setup custom variables
 (custom-set-variables
@@ -26,22 +26,32 @@
   (package-initialize)
 
   ;; Prioritize stability over recency for packages
-  (setf package-archive-priorities
-	'(("gnu"          . 50)
-	  ("nongnu"       . 40)
-	  ("melpa-stable" . 30)
-	  ("melpa"        . 20)
-	  ("org"          . 10))))
+  (setq package-archive-priorities
+        '(("gnu"          . 50)
+          ("nongnu"       . 40)
+          ("melpa-stable" . 30)
+          ("melpa"        . 20)
+          ("org"          . 10))))
 
 
 ;; Make evil-collection happy
-(setf evil-want-keybinding nil)
+(setq evil-want-keybinding nil)
 
 ;; Install EVIL (Extensible VI Layer) package
 (use-package evil
   :ensure t
   :config
-  (evil-mode t))
+  (evil-mode t)
+
+  ;; Remap ':q' and ':wq' commands to not terminate Emacs instance
+  (evil-ex-define-cmd "q" 'kill-current-buffer)
+  (evil-ex-define-cmd "wq" (lambda ()
+                             (interactive)
+                             (save-buffer)
+                             (kill-current-buffer)))
+
+  ;; Set vi-style search module
+  (evil-select-search-module 'evil-search-module 'evil-search))
 
 ;; Install commenting utilities for to EVIL mode
 (use-package evil-commentary
@@ -57,14 +67,14 @@
 
   ;; Enable EVIL mode flavoured bindings for specific modes only
   ;; (=> save traditional (**documented**) key bindings for everything else)
-  (setf evil-collection-mode-list
-	'(corfu)))
+  (setq evil-collection-mode-list
+        '(corfu dired)))
 
 ;; Install Magit
 (use-package magit
   :ensure t)
 
-;; Install OrgMode
+;; Install main package of Org mode
 (use-package org
   :ensure t)
 
@@ -81,24 +91,22 @@
   (add-hook 'inferior-lisp-mode-hook (lambda () (inferior-slime-mode t)))
 
   ;; Specify SBCL as a lisp compiler
-  (setf inferior-lisp-program "sbcl"))
+  (setq inferior-lisp-program "sbcl"))
 
-;; Install autocomplete
+;; Install autocomplete package (CORFU for now)
 (use-package corfu
   :ensure t
   :config
   (global-corfu-mode)
-  (setf corfu-auto t))
+  (setq corfu-auto t))
 
-;; Remap ':q' and ':wq' commands to not terminate EMACS instance
-(evil-ex-define-cmd "q" 'kill-current-buffer)
-(evil-ex-define-cmd "wq" (lambda ()
-			   (interactive)
-			   (save-buffer)
-			   (kill-current-buffer)))
+;;; Configuration of default Emacs things goes here
 
-;; Disable EMACS backup files
-(setf make-backup-files nil)
+;; Disable Emacs backup files
+(setq make-backup-files nil)
+
+;; Disable tab indentation by-default
+(setq-default indent-tabs-mode nil)
 
 ;; Decrease font size
 (set-face-attribute 'default nil :height 80)
