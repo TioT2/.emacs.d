@@ -20,13 +20,19 @@
 ;; Disable Emacs backup files
 (setq make-backup-files nil)
 
-;; Disable tab indentation by-default
-(setq-default indent-tabs-mode nil)
-
 ;; Decrease font size
 (set-face-attribute 'default nil :height 80)
 
+;; Indent by spaces (instead of tabs)
+(setq-default indent-tabs-mode nil)
 
+;; Set default indent width to 4
+(setq-default tab-width 4)
+
+;; Set default value to basic offset for C language
+(setq-default c-basic-offset tab-width)
+
+;;; Configure packages
 
 ;; Add package source repositories
 (use-package package
@@ -113,7 +119,8 @@
   :ensure t
   :config
   (helm-mode t)
-  (global-set-key (kbd "M-x") 'helm-M-x))
+  (global-set-key (kbd "M-x") 'helm-M-x)
+  (setq helm-completion-style 'helm-fuzzy))
 
 ;; Install autocomplete package (CORFU for now)
 (use-package corfu
@@ -124,6 +131,9 @@
 
 (defun language-hook-c ()
   "Hook on C/C++ language execution"
+  ;; Disable autoformat
+  ;; (add-to-list 'eglot-ignored-server-capabilities :documentFormattingProvider)
+  (add-to-list 'eglot-ignored-server-capabilities :documentOnTypeFormattingProvider)
   (eglot-ensure))
 
 ;; Setup LSPs (EGLOT)
