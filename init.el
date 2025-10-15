@@ -1,4 +1,4 @@
-;;; init.el --- TioT2 Emacs configuration main file -*- lexical-binding:t -*-
+;;; init.el --- TioT2 Emacs configuration main file -*- lexical-binding: t; -*-
 
 ;; Setup custom variables
 (custom-set-variables
@@ -7,13 +7,26 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(org-agenda-files nil)
- '(package-selected-packages '(corfu evil-collection evil-commentary magit slime)))
+ '(package-selected-packages '(corfu evil-collection evil-commentary helm magit slime)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+
+;;; Configuration of default Emacs things goes here
+
+;; Disable Emacs backup files
+(setq make-backup-files nil)
+
+;; Disable tab indentation by-default
+(setq-default indent-tabs-mode nil)
+
+;; Decrease font size
+(set-face-attribute 'default nil :height 80)
+
+
 
 ;; Add package source repositories
 (use-package package
@@ -56,12 +69,14 @@
 ;; Install commenting utilities for to EVIL mode
 (use-package evil-commentary
   :ensure t
+  :after evil
   :config
   (evil-commentary-mode))
 
 ;; Install package that enables EVIL-flavoured keymaps for Magit, Corfu, etc.
 (use-package evil-collection
   :ensure t
+  :after evil
   :config
   (evil-collection-init)
 
@@ -93,6 +108,13 @@
   ;; Specify SBCL as a lisp compiler
   (setq inferior-lisp-program "sbcl"))
 
+;; Install HELM for better search
+(use-package helm
+  :ensure t
+  :config
+  (helm-mode t)
+  (global-set-key (kbd "M-x") 'helm-M-x))
+
 ;; Install autocomplete package (CORFU for now)
 (use-package corfu
   :ensure t
@@ -100,15 +122,17 @@
   (global-corfu-mode)
   (setq corfu-auto t))
 
-;;; Configuration of default Emacs things goes here
+(defun language-hook-c ()
+  "Hook on C/C++ language execution"
+  (eglot-ensure))
 
-;; Disable Emacs backup files
-(setq make-backup-files nil)
-
-;; Disable tab indentation by-default
-(setq-default indent-tabs-mode nil)
-
-;; Decrease font size
-(set-face-attribute 'default nil :height 80)
+;; Setup LSPs (EGLOT)
+(use-package eglot
+  :ensure t
+  :config
+  ;; Set C/C++ hoooks
+  (add-hook 'c-mode-hook 'language-hook-c)
+  (add-hook 'c++-mode-hook 'language-hook-c)
+  (add-hook 'c-or-c++-mode-hook 'language-hook-c))
 
 ;;; init.el ends here
