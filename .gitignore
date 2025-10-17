@@ -5,4 +5,5 @@
 
 # Allowed things
 !init.el
+!custom.el
 !.gitignore
