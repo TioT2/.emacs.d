@@ -1,4 +1,4 @@
-;; init.el --- TioT2 Emacs configuration main file -*- lexical-binding: t; -*-
+;;; init.el --- TioT2 Emacs configuration main file -*- lexical-binding: t; -*-
 
 ;;; Configure EMACS itself
 
@@ -21,18 +21,26 @@
 ;; Decrease font size
 (set-face-attribute 'default nil :height 90)
 
-;; Indent by spaces (instead of tabs)
-(setq-default indent-tabs-mode nil)
+;; Set editing parameters
+(setq-default
+              ;; Set margin for scrolling
+              scroll-margin 3
 
-;; Set default indent width to 4
-(setq-default tab-width 4)
+              ;; Disable scroll 'jumping'
+              scroll-conservatively 101
 
-;; Set default value to basic offset for C language
-(setq-default c-basic-offset tab-width)
+              ;; Indent by spaces (instead of tabs)
+              indent-tabs-mode nil
+
+              ;; Set default indent width to 4
+              tab-width 4
+
+              ;; Set default value to basic offset for C language
+              c-basic-offset 4)
 
 ;;; Configure packages
 
-;; Add package source repositories
+;; Built-in package manager itself (just for configuration)
 (use-package package
   :config
 
@@ -54,7 +62,7 @@
 ;; Make evil-collection package happy
 (custom-set-variables '(evil-want-keybinding nil))
 
-;; Install EVIL (Extensible VI Layer) package
+;; EVIL (Extensible VI Layer, e.g. vim keybindings)
 (use-package evil
   :ensure t
   :config
@@ -70,56 +78,61 @@
   ;; Set vi-style search module
   (evil-select-search-module 'evil-search-module 'evil-search))
 
-;; Install commenting utilities for to EVIL mode
+;; EVIL comment utilities
 (use-package evil-commentary
   :ensure t
   :after evil
   :config
   (evil-commentary-mode))
 
-;; Install package that enables EVIL-flavoured keymaps for Magit, Corfu, etc.
+;; EVIL-flavoured keymaps for Magit, Corfu, etc.
 (use-package evil-collection
   :ensure t
   :after evil
   :config
   ;; Enable EVIL mode flavoured bindings for specific modes only
   ;; => save traditional (**documented**) key bindings for everything else
-  (custom-set-variables `(evil-collection-mode-list '(corfu dired slime)))
+  (custom-set-variables `(evil-collection-mode-list '(corfu dired)))
   (evil-collection-init))
 
-;; Install Magit
+;; Magit (git interface)
 (use-package magit
   :ensure t)
 
-;; Install main package of Org mode
+;; Org mode
 (use-package org
   :ensure t)
 
-;; Install package for CommonLisp development (SLIME) and setup it
-(use-package slime
+;; Package for CommonLisp development
+(use-package sly
   :ensure t
   :config
+  (add-hook 'lisp-mode-hook (lambda () (sly-mode t)))
+  (setq inferior-lisp-program "sbcl")
+  (sly-setup))
 
-  ;; Enable SLIME in lisp-mode
-  (add-hook 'lisp-mode-hook (lambda () (slime-mode t)))
-  (add-hook 'inferior-lisp-mode-hook (lambda () (inferior-slime-mode t)))
+;; Autocomplete package
+(use-package corfu
+  :ensure t
+  :config
+  (global-corfu-mode)
 
-  ;; Enable SLIME extensions
-  (slime-setup '(slime-fancy slime-quicklisp slime-asdf slime-mrepl))
+  ;; Configurate corfu
+  (custom-set-variables
+   '(corfu-auto t)
+   '(corfu-auto-delay 0)
+   '(corfu-auto-prefix 0)
+   '(corfu-quit-no-match nil)))
 
-  ;; Set installed CL implementations
-  (setq slime-lisp-implementations
-        '((sbcl ("sbcl")))))
-
-;; Configure rust-specific extension
+;; Rust-specific package
 (use-package rust-mode
-  :ensure t
-  :config
-  ;; Enable native treesitter (?)
-  ;; (custom-set-variables '(rust-mode-treesitter-derive t))
-  )
+  :ensure t)
 
-;; Install HELM for better search
+;; Haskell-specific package
+(use-package haskell-mode
+  :ensure t)
+
+;; HELM (package that **significantly** improves searching-related experience)
 (use-package helm
   :ensure t
   :config
@@ -130,43 +143,51 @@
     ;; Disable strange helm navigation sh*t
    '(helm-move-to-line-cycle-in-source nil)))
 
-;; Install autocomplete package (CORFU for now)
-(use-package corfu
-  :ensure t
-  :config
-  (global-corfu-mode)
-  (custom-set-variables '(corfu-auto t)))
-
-;; Install file tree sidebar package
+;; Tree sidebar (replace?)
 (use-package treemacs
   :ensure t
   :config
   (treemacs-resize-icons 14))
 
-;; Install evil mode for it
+;; EVIL compatibility layer for 'treemacs'
 (use-package treemacs-evil
   :ensure t
   :after treemacs evil)
 
-(defun language-hook-c ()
-  "Hook on C/C++ language"
-  (eglot-ensure)
-  ;; Disable autoformat
-  ;; (add-to-list 'eglot-ignored-server-capabilities :documentFormattingProvider)
-  (add-to-list 'eglot-ignored-server-capabilities :documentOnTypeFormattingProvider))
-
-(defun language-hook-rust ()
-  "Hook on Rust language"
-  (eglot-ensure))
-
-;; Setup LSPs (EGLOT)
+;; EGLOT (Emacs polyGLOT, EMACS LSP client) package
 (use-package eglot
   :ensure t
   :config
-  ;; Set C/C++ hoooks
-  (add-hook 'c-mode-hook 'language-hook-c)
-  (add-hook 'c++-mode-hook 'language-hook-c)
-  (add-hook 'c-or-c++-mode-hook 'language-hook-c)
-  (add-hook 'rust-mode-hook 'language-hook-rust))
+
+  ;; Bridge 'haskell-mode' and 'eglot'
+  (add-to-list 'eglot-server-programs '(haskell-mode . ("haskell-language-server-wrapper" "--lsp")))
+
+  ;; Configure C-like languages
+  (add-hook 'c-mode-common-hook
+   (lambda ()
+     "C/C++/... language common hook"
+     (electric-pair-mode)
+     (eglot-ensure)
+     ;; Disable autoformat
+     ;; (add-to-list 'eglot-ignored-server-capabilities :documentFormattingProvider)
+     (add-to-list 'eglot-ignored-server-capabilities :documentOnTypeFormattingProvider)
+     (add-to-list 'eglot-ignored-server-capabilities :inlayHintProvider)))
+
+  ;; Configure Rust language
+  (add-hook 'rust-mode-hook
+   (lambda ()
+     "Rust language hook"
+     (electric-pair-mode)
+     (eglot-ensure)
+     ;; Disable auto-formatting and inlay hints
+     (add-to-list 'eglot-ignored-server-capabilities :documentOnTypeFormattingProvider)
+     (add-to-list 'eglot-ignored-server-capabilities :inlayHintProvider)))
+
+  ;; Configure Haskell language
+  (add-hook 'haskell-mode-hook
+   (lambda ()
+     "Haskell language hook"
+     (add-to-list 'eglot-ignored-server-capabilities :inlayHintProvider)
+     (eglot-ensure))))
 
 ;;; init.el ends here
