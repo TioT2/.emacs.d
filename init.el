@@ -82,6 +82,10 @@
                              (interactive)
                              (save-buffer)
                              (kill-current-buffer)))
+  (evil-define-key 'insert global-map (kbd "TAB") 'tab-to-tab-stop)
+  (evil-define-key 'insert c-mode-map (kbd "TAB") 'tab-to-tab-stop)
+  (evil-define-key 'insert rust-mode-map (kbd "TAB") 'tab-to-tab-stop)
+  (evil-define-key 'insert haskell-mode-map (kbd "TAB") 'tab-to-tab-stop)
 
   ;; Set vi-style search module
   (evil-select-search-module 'evil-search-module 'evil-search))

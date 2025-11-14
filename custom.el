@@ -6,7 +6,19 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(custom-enabled-themes '(modus-vivendi-tinted)))
+ '(corfu-auto t)
+ '(corfu-quit-no-match t)
+ '(custom-enabled-themes '(modus-vivendi-tinted))
+ '(custom-file (concat user-emacs-directory "custom.el"))
+ '(evil-collection-mode-list '(corfu dired))
+ '(evil-want-keybinding nil)
+ '(helm-completion-style 'helm-fuzzy)
+ '(helm-move-to-line-cycle-in-source nil)
+ '(make-backup-files nil)
+ '(package-archive-priorities
+   '(("gnu" . 50) ("nongnu" . 40) ("melpa-stable" . 30) ("melpa" . 20)
+     ("org" . 10)))
+ '(safe-local-variable-values '((tab-size . 8))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
