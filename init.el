@@ -41,21 +41,30 @@
  ;; Set default indent width to 4
  tab-width 4
 
+ ;; Disable outdate american typist convention
+ sentence-end-double-space nil
+
  ;; Set default value to basic offset for C language
  c-basic-offset 4)
 
-
-
 ;;; Configure packages
+
+(defun append-to-list (list values &optional append compare-fn)
+  "Perform add-to-list for all values from another list"
+  (dolist (val values)
+    (add-to-list list val append compare-fn)))
 
 ;; Built-in package manager itself (just for configuration)
 (use-package package
   :config
 
-  ;; Add package archives (org, melpa, melpa-stable)
-  (add-to-list 'package-archives '("org"          . "https://orgmode.org/elpa/") t)
-  (add-to-list 'package-archives '("melpa"        . "https://melpa.org/packages/") t)
-  (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+  ;; Append some package archives
+  (append-to-list 'package-archives
+                  '(("org"          . "https://orgmode.org/elpa/")
+                    ("melpa"        . "https://melpa.org/packages/")
+                    ("melpa-stable" . "https://stable.melpa.org/packages/"))
+                  t)
+
   (package-initialize)
 
   ;; Prioritize stability over recency for packages
@@ -82,13 +91,26 @@
                              (interactive)
                              (save-buffer)
                              (kill-current-buffer)))
+
+  ;; Make emacs to have correct tabs
   (evil-define-key 'insert global-map (kbd "TAB") 'tab-to-tab-stop)
   (evil-define-key 'insert c-mode-map (kbd "TAB") 'tab-to-tab-stop)
   (evil-define-key 'insert rust-mode-map (kbd "TAB") 'tab-to-tab-stop)
   (evil-define-key 'insert haskell-mode-map (kbd "TAB") 'tab-to-tab-stop)
 
+  ;; Disable evil-mode in info-mode
+  (evil-set-initial-state 'Info-mode 'emacs)
+
   ;; Set vi-style search module
   (evil-select-search-module 'evil-search-module 'evil-search))
+
+;; EVIL VIM-like input mode dependent cursor switch support
+(use-package evil-terminal-cursor-changer
+  :ensure t
+  :after evil
+  :config
+  (unless (display-graphic-p)
+    (evil-terminal-cursor-changer-activate)))
 
 ;; EVIL comment utilities
 (use-package evil-commentary
@@ -103,8 +125,8 @@
   :after evil
   :config
   ;; Enable EVIL mode flavoured bindings for specific modes only
-  ;; => save traditional (**documented**) key bindings for everything else
-  (custom-set-variables `(evil-collection-mode-list '(corfu dired)))
+  ;; (=> save traditional (**documented**) key bindings for everything else)
+  (custom-set-variables `(evil-collection-mode-list '(corfu dired org)))
   (evil-collection-init))
 
 ;; Magit (git gui package)
@@ -131,6 +153,16 @@
   (custom-set-variables
    '(corfu-auto t)
    '(corfu-quit-no-match t)))
+
+;; CORFU support for terminal. Note: This package **must** be removed after
+;; switch on EMACS 31 (it will introduce required functionality out of the box)
+(use-package corfu-terminal
+  :ensure t
+  :after corfu
+  :config
+  ;; Enable terminal mode then display is ont graphical
+  (unless (display-graphic-p)
+    (corfu-terminal-mode t)))
 
 ;; HELM (package that **significantly** improves searching-related experience)
 (use-package helm
@@ -168,7 +200,7 @@
 
 (defun ignore-eglot-server-capabilities (&rest caps)
   "Ignore some EGLOT server capabilities"
-  (dolist (cap caps) (add-to-list 'eglot-ignored-server-capabilities cap)))
+  (append-to-list 'eglot-ignored-server-capabilities caps t))
 
 ;; EGLOT (Emacs polyGLOT, EMACS LSP client) package.
 (use-package eglot
@@ -177,7 +209,8 @@
   :config
 
   ;; Bridge 'haskell-mode' and 'eglot' 
-  (add-to-list 'eglot-server-programs '(haskell-mode . ("haskell-language-server-wrapper" "--lsp")))
+  (add-to-list 'eglot-server-programs
+               '(haskell-mode . ("haskell-language-server-wrapper" "--lsp")))
 
   ;; Configure C-like languages
   (add-hook 'c-mode-common-hook
@@ -218,102 +251,5 @@
   :vc (:url "https://github.com/jdtsmith/eglot-booster")
   :config
   (eglot-booster-mode))
-
-;;; Some data saved for future experiments
-
-;; (defun meow-setup-querty ()
-;;   "QUERTY layout for meow mode"
-;;   (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
-;;   ;(meow-motion-define-key
-;;   ; '("j" . meow-next)
-;;   ; '("k" . meow-prev)
-;;   ; '("<escape>" . ignore))
-
-;;   (meow-leader-define-key
-;;    ;; Use SPC (0-9) for digit arguments.
-;;    '("1" . meow-digit-argument)
-;;    '("2" . meow-digit-argument)
-;;    '("3" . meow-digit-argument)
-;;    '("4" . meow-digit-argument)
-;;    '("5" . meow-digit-argument)
-;;    '("6" . meow-digit-argument)
-;;    '("7" . meow-digit-argument)
-;;    '("8" . meow-digit-argument)
-;;    '("9" . meow-digit-argument)
-;;    '("0" . meow-digit-argument)
-;;    '("/" . meow-keypad-describe-key)
-;;    '("?" . meow-cheatsheet))
-
-;;   (meow-normal-define-key
-;;    '("0" . meow-expand-0)
-;;    '("9" . meow-expand-9)
-;;    '("8" . meow-expand-8)
-;;    '("7" . meow-expand-7)
-;;    '("6" . meow-expand-6)
-;;    '("5" . meow-expand-5)
-;;    '("4" . meow-expand-4)
-;;    '("3" . meow-expand-3)
-;;    '("2" . meow-expand-2)
-;;    '("1" . meow-expand-1)
-;;    '("-" . negative-argument)
-;;    '(";" . meow-reverse)
-;;    '("," . meow-inner-of-thing)
-;;    '("." . meow-bounds-of-thing)
-;;    '("[" . meow-beginning-of-thing)
-;;    '("]" . meow-end-of-thing)
-;;    '("a" . meow-append)
-;;    '("A" . meow-open-below)
-;;    '("b" . meow-back-word)
-;;    '("B" . meow-back-symbol)
-;;    '("c" . meow-change)
-;;    '("d" . meow-delete)
-;;    '("D" . meow-backward-delete)
-;;    '("e" . meow-next-word)
-;;    '("E" . meow-next-symbol)
-;;    '("f" . meow-find)
-;;    '("g" . meow-cancel-selection)
-;;    '("G" . meow-grab)
-;;    '("h" . meow-left)
-;;    '("H" . meow-left-expand)
-;;    '("i" . meow-insert)
-;;    '("I" . meow-open-above)
-;;    '("j" . meow-next)
-;;    '("J" . meow-next-expand)
-;;    '("k" . meow-prev)
-;;    '("K" . meow-prev-expand)
-;;    '("l" . meow-right)
-;;    '("L" . meow-right-expand)
-;;    '("m" . meow-join)
-;;    '("n" . meow-search)
-;;    '("o" . meow-block)
-;;    '("O" . meow-to-block)
-;;    '("p" . meow-yank)
-;;    '("q" . meow-quit)
-;;    '("Q" . meow-goto-line)
-;;    '("r" . meow-replace)
-;;    '("R" . meow-swap-grab)
-;;    '("s" . meow-kill)
-;;    '("t" . meow-till)
-;;    '("u" . meow-undo)
-;;    '("U" . meow-undo-in-selection)
-;;    '("v" . meow-visit)
-;;    '("w" . meow-mark-word)
-;;    '("W" . meow-mark-symbol)
-;;    '("x" . meow-line)
-;;    '("X" . meow-goto-line)
-;;    '("y" . meow-save)
-;;    '("Y" . meow-sync-grab)
-;;    '("z" . meow-pop-selection)
-;;    '("'" . repeat)
-;;    '("<escape>" . ignore)))
-
-;; ;; MEOW mode (EMACS-friendly modal editing, "yet another modal editing mode for emacs")
-;; (use-package meow
-;;   :ensure t
-;;   :config
-  
-;;   ;; Setup keybindings and enable global modes
-;;   (meow-setup-querty)
-;;   (meow-global-mode t))
 
 ;;; init.el ends here
