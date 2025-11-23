@@ -122,11 +122,15 @@
 ;; EVIL-flavoured keymaps for Magit, Corfu, etc.
 (use-package evil-collection
   :ensure t
-  :after evil
+  ;; Load package from MELPA (instead of MELPA-STABLE) due to lack of dape
+  ;; support there.
+  :pin melpa
+  :after evil corfu dired org dape
   :config
+
   ;; Enable EVIL mode flavoured bindings for specific modes only
   ;; (=> save traditional (**documented**) key bindings for everything else)
-  (custom-set-variables `(evil-collection-mode-list '(corfu dired org)))
+  (custom-set-variables `(evil-collection-mode-list '(corfu dired org dape)))
   (evil-collection-init))
 
 ;; Magit (git gui package)
@@ -135,13 +139,21 @@
 
 ;; ORG mode package
 (use-package org
-  :ensure t)
+  :ensure t
+  :config
+
+  ;; Enable visual lines in orgmode
+  (add-hook 'org-mode-hook
+            (lambda ()
+              (visual-line-mode))))
 
 ;; Package for CommonLisp development (SLIME improved alternative)
 (use-package sly
   :ensure t
   :config
-  (add-hook 'lisp-mode-hook (lambda () (sly-mode t)))
+  (add-hook 'lisp-mode-hook
+            (lambda ()
+              (sly-mode)))
   (setq inferior-lisp-program "sbcl")
   (sly-setup))
 
@@ -208,48 +220,65 @@
   :after rust-mode haskell-mode
   :config
 
-  ;; Bridge 'haskell-mode' and 'eglot' 
+  ;; Bridge 'haskell-mode' and 'eglot'
   (add-to-list 'eglot-server-programs
                '(haskell-mode . ("haskell-language-server-wrapper" "--lsp")))
 
   ;; Configure C-like languages
   (add-hook 'c-mode-common-hook
-   (lambda ()
-     "C/C++/... language common hook"
-     ;; (electric-pair-mode)
-     (eglot-ensure)
-     ;; Disable autoformat
+            (lambda ()
+              "C/C++/... language common hook"
+              ;; (electric-pair-mode)
+              (eglot-ensure)
+              (display-line-numbers-mode)
+              ;; Disable autoformat
 
-     (ignore-eglot-server-capabilities
-      :documentOnTypeFormattingProvider
-      :inlayHintProvider)))
+              (ignore-eglot-server-capabilities
+               :documentOnTypeFormattingProvider
+               :inlayHintProvider)))
 
   ;; Configure Rust language
   (add-hook 'rust-mode-hook
-   (lambda ()
-     "Rust language hook"
-     (display-line-numbers-mode)
-     (electric-pair-mode)
-     (eglot-ensure)
+            (lambda ()
+              "Rust language hook"
+              (display-line-numbers-mode)
+              (electric-pair-mode)
+              (eglot-ensure)
 
-     ;; Disable auto-formatting and inlay hints
-     (ignore-eglot-server-capabilities
-      :documentOnTypeFormattingProvider
-      :inlayHintProvider)))
+              ;; Disable auto-formatting and inlay hints
+              (ignore-eglot-server-capabilities
+               :documentOnTypeFormattingProvider
+               :inlayHintProvider)))
 
   ;; Configure Haskell language
   (add-hook 'haskell-mode-hook
-   (lambda ()
-     "Haskell language hook"
-     (eglot-ensure)
-     (ignore-eglot-server-capabilities
-      :inlayHintProvider))))
+            (lambda ()
+              "Haskell language hook"
+              (eglot-ensure)
+              (ignore-eglot-server-capabilities
+               :inlayHintProvider))))
 
-;; Install EGLOT-Booster to increase LSP performance
+;; EGLOT-Booster to increase LSP performance
 (use-package eglot-booster
-  :after eglot
   :vc (:url "https://github.com/jdtsmith/eglot-booster")
+  :ensure t
+  :after eglot
   :config
   (eglot-booster-mode))
+
+;; Useful package shortcutting repeating key combinations
+;; (e.g. C-x o C-x o C-x o ==> C-x o o o)
+(use-package repeat
+  :ensure t
+  :config
+  (repeat-mode))
+
+;; ELDOC (initially ELisp DOCumentation, code doc)
+(use-package eldoc
+  :ensure t)
+
+;; DAPE (Debug Adapter Protocol for Emacs, DAP Emacs extension)
+(use-package dape
+  :ensure t)
 
 ;;; init.el ends here
