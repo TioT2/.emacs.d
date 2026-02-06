@@ -46,8 +46,6 @@
   ;; Set some default editing parameters
   (setq-default
    scroll-margin           3  ; Set margin for scrolling
-
-
    scroll-conservatively 101  ; Disable scroll 'jumping'
    indent-tabs-mode      nil  ; Indent by spaces (instead of tabs)
                                 ; (HOW???)
@@ -77,7 +75,7 @@
                              (kill-current-buffer)))
 
   ;; Make EMACS to have correct tabs (in these modes)
-  (evil-define-key 'insert global-map (kbd "TAB") 'tab-to-tab-stop)
+  ;; (evil-define-key 'insert global-map (kbd "TAB") 'tab-to-tab-stop)
   (evil-define-key 'insert c-mode-map (kbd "TAB") 'tab-to-tab-stop)
   (evil-define-key 'insert rust-mode-map (kbd "TAB") 'tab-to-tab-stop)
   ;; (evil-define-key 'insert haskell-mode-map (kbd "TAB") 'tab-to-tab-stop)
@@ -85,7 +83,7 @@
   ;; Set vi-style search module
   (evil-select-search-module 'evil-search-module 'evil-search))
 
-;; EVILNC (VIM NerdCommenter package port, much
+;; EVILNC (VIM NerdCommenter package port)
 (use-package evil-nerd-commenter
   :ensure t
   :after evil
@@ -105,6 +103,15 @@
   (add-hook 'org-mode-hook
             (lambda ()
               (visual-line-mode))))
+
+;; Project folder interaction module
+(use-package project
+  :ensure t
+  :config
+
+  ;; Add cabal files to project root markers
+  (setq project-vc-extra-root-markers
+        '("*.cabal")))
 
 ;; Package for CommonLisp development (SLIME improved alternative)
 (use-package sly
@@ -167,7 +174,6 @@
   :ensure t
   :after rust-mode haskell-mode
   :config
-
 
   ;; Add ~/.ghcup/bin to path
   (let ((ghcup-path (format "%s%s" (getenv "HOME") "/.ghcup/bin")))
