@@ -7,6 +7,7 @@
   (dolist (val values)
     (add-to-list list val append compare-fn)))
 
+
 (defun ignore-eglot-server-capabilities (&rest caps)
   "Ignore some EGLOT server capabilities"
   (append-to-list 'eglot-ignored-server-capabilities caps t))
@@ -32,7 +33,7 @@
   (setopt make-backup-files nil)
 
   ;; Increase font size
-  (set-face-attribute 'default nil :height 128)
+  (set-face-attribute 'default nil :height 120)
 
   ;; Make GC threshold bigger (to 128mb) to make EGLOT run faster
   (setq gc-cons-threshold (* 128 1024 1024))
@@ -42,6 +43,16 @@
 
   ;; Disable outdate american typist convention
   (setopt sentence-end-double-space nil)
+
+  ;; Remap Rust and C major modes to the tree-sitter counterparts
+  (setq major-mode-remap-alist
+        '((rust-mode . rust-ts-mode)
+          (c-mode . c-ts-mode)))
+
+  ;; Disable rust-analyzer inactive code disgnostics
+  (setq-default eglot-workspace-configuration
+                '(:rust-analyzer
+                  (:diagnostics (:disabled ["inactive-code"]))))
 
   ;; Set some default editing parameters
   (setq-default
@@ -55,7 +66,14 @@
 
 ;; Built-in package manager (just for configuration)
 (use-package package
-  :after emacs)
+  :after emacs
+  :config
+  ;; Add melpa-stable support
+  (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+  (setq package-archive-priorities
+        '(("gnu"          . 30)
+          ("nongnu"       . 20)
+          ("melpa-stable" . 10))))
 
 ;; EVIL (Extensible VI Layer, e.g. vim-style keybindings)
 (use-package evil
@@ -75,10 +93,9 @@
                              (kill-current-buffer)))
 
   ;; Make EMACS to have correct tabs (in these modes)
-  ;; (evil-define-key 'insert global-map (kbd "TAB") 'tab-to-tab-stop)
   (evil-define-key 'insert c-mode-map (kbd "TAB") 'tab-to-tab-stop)
   (evil-define-key 'insert rust-mode-map (kbd "TAB") 'tab-to-tab-stop)
-  ;; (evil-define-key 'insert haskell-mode-map (kbd "TAB") 'tab-to-tab-stop)
+  (evil-define-key 'insert rust-ts-mode-map (kbd "TAB") 'tab-to-tab-stop)
 
   ;; Set vi-style search module
   (evil-select-search-module 'evil-search-module 'evil-search))
@@ -128,14 +145,16 @@
   :ensure t
   :config
   (global-corfu-mode)
+  (corfu-popupinfo-mode) ; display detailed info in popups
 
   ;; Anger corfu a bit
   (when (package-installed-p 'evil)
     (evil-define-key 'insert global-map (kbd "C-p") 'corfu-previous)
     (evil-define-key 'insert global-map (kbd "C-n") 'corfu-next))
 
+  ;; (setopt corfu-quit-no-match t)
   (setopt corfu-auto t)
-  (setopt corfu-quit-no-match t))
+  (setopt corfu-popupinfo-delay '(1.0 . 0.33)))
 
 ;; CORFU support for terminal. Note: This package **must** be removed after
 ;; switch on EMACS 31 (required functionality will be available out of the box)
@@ -169,11 +188,31 @@
 (use-package haskell-mode
   :ensure t)
 
+;; Markdown-specific package (In addition makes EGLOT able to parse markdown inputs)
+(use-package markdown-mode
+  :ensure t)
+
+(defun setup-rust-mode ()
+  "Function to perform after entering rust-mode"
+  (print "RUST MODE HOOK")
+  (display-line-numbers-mode)
+  (electric-pair-mode)
+  (eglot-ensure)
+
+  ;; Disable auto-formatting and inlay hints
+  (ignore-eglot-server-capabilities
+   :documentOnTypeFormattingProvider
+   :inlayHintProvider))
+
+
 ;; EGLOT (Emacs polyGLOT, EMACS LSP client) package.
 (use-package eglot
   :ensure t
-  :after rust-mode haskell-mode
+  :after rust-mode haskell-mode markdown-mode
   :config
+
+  ;; Kill eglot after last buffer killed
+  (setopt eglot-autoshutdown t)
 
   ;; Add ~/.ghcup/bin to path
   (let ((ghcup-path (format "%s%s" (getenv "HOME") "/.ghcup/bin")))
@@ -200,23 +239,19 @@
                :inlayHintProvider)))
 
   ;; Configure Rust language
-  (add-hook 'rust-mode-hook
-            (lambda ()
-              "Rust language hook"
-              (display-line-numbers-mode)
-              (electric-pair-mode)
-              (eglot-ensure)
-
-              ;; Disable auto-formatting and inlay hints
-              (ignore-eglot-server-capabilities
-               :documentOnTypeFormattingProvider
-               :inlayHintProvider)))
+  (add-hook 'rust-mode-hook 'setup-rust-mode)
+  (add-hook 'rust-ts-mode-hook 'setup-rust-mode)
 
   ;; Configure Haskell language
   (add-hook 'haskell-mode-hook
             (lambda ()
               "Haskell language hook"
-              (eglot-ensure))))
+              ;; (haskell-decl-scan-mode)
+              ;; (haskell-doc-mode)
+              (display-line-numbers-mode)
+              (eglot-ensure)
+              (ignore-eglot-server-capabilities
+               :inlayHintProvider))))
 
 ;; DAPE (Debug Adapter Protocol for Emacs, DAP support extension)
 (use-package dape
