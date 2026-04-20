@@ -33,7 +33,7 @@
   (setopt make-backup-files nil)
 
   ;; Increase font size
-  (set-face-attribute 'default nil :height 120)
+  (set-face-attribute 'default nil :height 96)
 
   ;; Make GC threshold bigger (to 128mb) to make EGLOT run faster
   (setq gc-cons-threshold (* 128 1024 1024))
@@ -45,9 +45,9 @@
   (setopt sentence-end-double-space nil)
 
   ;; Remap Rust and C major modes to the tree-sitter counterparts
-  (setq major-mode-remap-alist
-        '((rust-mode . rust-ts-mode)
-          (c-mode . c-ts-mode)))
+  ;; (setq major-mode-remap-alist
+  ;;       '((rust-mode . rust-ts-mode)
+  ;;         (c-mode . c-ts-mode)))
 
   ;; Disable rust-analyzer inactive code disgnostics
   (setq-default eglot-workspace-configuration
@@ -193,8 +193,7 @@
   :ensure t)
 
 (defun setup-rust-mode ()
-  "Function to perform after entering rust-mode"
-  (print "RUST MODE HOOK")
+  "All rust-* modes configuration function"
   (display-line-numbers-mode)
   (electric-pair-mode)
   (eglot-ensure)
