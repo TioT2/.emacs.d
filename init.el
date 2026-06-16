@@ -44,15 +44,13 @@
   ;; Disable outdate american typist convention
   (setopt sentence-end-double-space nil)
 
-  ;; Remap Rust and C major modes to the tree-sitter counterparts
-  ;; (setq major-mode-remap-alist
-  ;;       '((rust-mode . rust-ts-mode)
-  ;;         (c-mode . c-ts-mode)))
-
   ;; Disable rust-analyzer inactive code disgnostics
   (setq-default eglot-workspace-configuration
                 '(:rust-analyzer
                   (:diagnostics (:disabled ["inactive-code"]))))
+
+  ;; Display line numbers in programming-related modes
+  (add-hook 'prog-mode-hook (lambda () (display-line-numbers-mode)))
 
   ;; Set some default editing parameters
   (setq-default
@@ -74,6 +72,21 @@
         '(("gnu"          . 30)
           ("nongnu"       . 20)
           ("melpa-stable" . 10))))
+
+;; Tree-sitter configuration
+(use-package treesit
+  :config
+
+  ;; ;; Set tree-sitter source files
+  ;; (setq treesit-language-source-alist
+  ;;       '(
+  ;;         ))
+
+  ;; ;; Remap Rust and C major modes to the tree-sitter counterparts
+  ;; (setq major-mode-remap-alist
+  ;;       '((rust-mode . rust-ts-mode)
+  ;;         (c-mode . c-ts-mode)))
+  )
 
 ;; EVIL (Extensible VI Layer, e.g. vim-style keybindings)
 (use-package evil
@@ -129,6 +142,13 @@
   ;; Add cabal files to project root markers
   (setq project-vc-extra-root-markers
         '("*.cabal")))
+
+;; Package for key repeat
+(use-package repeat
+  :ensure t
+  :config
+
+  (add-hook 'prog-mode-hook (lambda () (repeat-mode))))
 
 ;; Package for CommonLisp development (SLIME improved alternative)
 (use-package sly
@@ -194,7 +214,6 @@
 
 (defun setup-rust-mode ()
   "All rust-* modes configuration function"
-  (display-line-numbers-mode)
   (electric-pair-mode)
   (eglot-ensure)
 
@@ -222,6 +241,10 @@
   (add-to-list 'eglot-server-programs
                '(haskell-mode . ("haskell-language-server-wrapper" "--lsp")))
 
+  ;; Disable header insertion
+  (add-to-list 'eglot-server-programs
+               '((c-mode c++-mode) . ("clangd" "--header-insertion=never")))
+
   ;; Configure C-like languages
   (add-hook 'c-mode-common-hook
             (lambda ()
@@ -229,7 +252,6 @@
 
               ;; (electric-pair-mode)
               (eglot-ensure)
-              (display-line-numbers-mode)
 
               ;; Disable autoformat
 
@@ -247,14 +269,39 @@
               "Haskell language hook"
               ;; (haskell-decl-scan-mode)
               ;; (haskell-doc-mode)
-              (display-line-numbers-mode)
-              (eglot-ensure)
+              ;; (eglot-ensure) Disable fucking eglot, it's a total piece of shit
               (ignore-eglot-server-capabilities
                :inlayHintProvider))))
 
 ;; DAPE (Debug Adapter Protocol for Emacs, DAP support extension)
 (use-package dape
-  :ensure t)
+  :ensure t
+  :config
+
+  ;; Set vsocode-style debugging keymaps
+  ; (keymap-set prog-mode-map "<f5>"
+  ;             (lambda ()
+  ;               (interactive)
+  ;               (if (member "dape-mode" minor-mode-list)
+  ;                   (dape-continue)
+  ;                 (dape))))
+  ; (keymap-set prog-mode-map "<f9>"
+  ;             (lambda ()
+  ;               (interactive)
+  ;               (dape-breakpoint-toggle)))
+  ; (keymap-set prog-mode-map "<f10>"
+  ;             (lambda ()
+  ;               (interactive)
+  ;               (dape-next)))
+  ; (keymap-set prog-mode-map "<f11>"
+  ;             (lambda ()
+  ;               (interactive)
+  ;               (dape-step-in)))
+  ; (keymap-set prog-mode-map "S-<f11>"
+  ;             (lambda ()
+  ;               (interactive)
+  ;               (dape-step-out)))
+  )
 
 ;; AUCTeX (Aalborg University Center TeX, Mode for TeX editing)
 (use-package auctex
@@ -264,5 +311,7 @@
 ;; installed for orgmode cdlatex plugin)
 (use-package cdlatex
   :ensure t)
+
+(put 'dired-find-alternate-file 'disabled nil)
 
 ;;; init.el ends here
