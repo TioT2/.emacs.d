@@ -7,7 +7,6 @@
   (dolist (val values)
     (add-to-list list val append compare-fn)))
 
-
 (defun ignore-eglot-server-capabilities (&rest caps)
   "Ignore some EGLOT server capabilities"
   (append-to-list 'eglot-ignored-server-capabilities caps t))
@@ -50,7 +49,13 @@
                   (:diagnostics (:disabled ["inactive-code"]))))
 
   ;; Display line numbers in programming-related modes
-  (add-hook 'prog-mode-hook (lambda () (display-line-numbers-mode)))
+  (add-hook 'prog-mode-hook (lambda ()
+                              (column-number-mode)
+                              (display-line-numbers-mode)))
+
+  ;; Add cppm files to c++-mode
+  (add-to-list 'auto-mode-alist
+               '("\\.cppm\\'" . c++-mode))
 
   ;; Set some default editing parameters
   (setq-default
@@ -72,6 +77,16 @@
         '(("gnu"          . 30)
           ("nongnu"       . 20)
           ("melpa-stable" . 10))))
+
+;; DIRED (DIRectory EDitor, EMACS feature)
+(use-package dired
+  :config
+  (put 'dired-find-alternate-file 'disabled nil))
+
+;; ELDOC (ELisp DOCumentation)
+(use-package eldoc
+  :config
+  (setopt eldoc-echo-area-use-multiline-p t))
 
 ;; Tree-sitter configuration
 (use-package treesit
@@ -107,11 +122,13 @@
 
   ;; Make EMACS to have correct tabs (in these modes)
   (evil-define-key 'insert c-mode-map (kbd "TAB") 'tab-to-tab-stop)
+  (evil-define-key 'insert c++-mode-map (kbd "TAB") 'tab-to-tab-stop)
   (evil-define-key 'insert rust-mode-map (kbd "TAB") 'tab-to-tab-stop)
   (evil-define-key 'insert rust-ts-mode-map (kbd "TAB") 'tab-to-tab-stop)
 
   ;; Set vi-style search module
   (evil-select-search-module 'evil-search-module 'evil-search))
+
 
 ;; EVILNC (VIM NerdCommenter package port)
 (use-package evil-nerd-commenter
@@ -150,16 +167,6 @@
 
   (add-hook 'prog-mode-hook (lambda () (repeat-mode))))
 
-;; Package for CommonLisp development (SLIME improved alternative)
-(use-package sly
-  :ensure t
-  :config
-  (add-hook 'lisp-mode-hook
-            (lambda ()
-              (sly-mode)))
-  (setq inferior-lisp-program "sbcl")
-  (sly-setup))
-
 ;; Autocomplete
 (use-package corfu
   :ensure t
@@ -186,19 +193,30 @@
   (unless (display-graphic-p)
     (corfu-terminal-mode t)))
 
-;; HELM (package that **significantly** improves searching-related experience)
-(use-package helm
+;; Completion package
+(use-package ivy
   :ensure t
   :config
-  (helm-mode t)
+  (ivy-mode t)
+  (setq-default ivy-height 24))
 
-  ;; Rebind standard key bindings to helm alternatives
-  (global-set-key (kbd "M-x") 'helm-M-x)
-  (global-set-key (kbd "C-x C-f") 'helm-find-files)
+;; IVY-based isearch alternative
+(use-package swiper
+  :ensure t)
 
-  ;; Setup helm completions
-  (setopt helm-completion-style 'helm-fuzzy)
-  (setopt helm-move-to-line-cycle-in-source nil))
+;; IVY-based replacements for standard EMACS commands (comparable with HELM ones)
+(use-package counsel
+  :ensure t)
+
+;; Package for CommonLisp development (SLIME improved alternative)
+(use-package sly
+  :ensure t
+  :config
+  (add-hook 'lisp-mode-hook
+            (lambda ()
+              (sly-mode)))
+  (setq inferior-lisp-program "sbcl")
+  (sly-setup))
 
 ;; Rust-specific package
 (use-package rust-mode
@@ -212,6 +230,10 @@
 (use-package markdown-mode
   :ensure t)
 
+;; Lean4-specific package (maintained fork of lean4-mode)
+(use-package nael
+  :ensure t)
+
 (defun setup-rust-mode ()
   "All rust-* modes configuration function"
   (electric-pair-mode)
@@ -221,7 +243,6 @@
   (ignore-eglot-server-capabilities
    :documentOnTypeFormattingProvider
    :inlayHintProvider))
-
 
 ;; EGLOT (Emacs polyGLOT, EMACS LSP client) package.
 (use-package eglot
@@ -275,33 +296,7 @@
 
 ;; DAPE (Debug Adapter Protocol for Emacs, DAP support extension)
 (use-package dape
-  :ensure t
-  :config
-
-  ;; Set vsocode-style debugging keymaps
-  ; (keymap-set prog-mode-map "<f5>"
-  ;             (lambda ()
-  ;               (interactive)
-  ;               (if (member "dape-mode" minor-mode-list)
-  ;                   (dape-continue)
-  ;                 (dape))))
-  ; (keymap-set prog-mode-map "<f9>"
-  ;             (lambda ()
-  ;               (interactive)
-  ;               (dape-breakpoint-toggle)))
-  ; (keymap-set prog-mode-map "<f10>"
-  ;             (lambda ()
-  ;               (interactive)
-  ;               (dape-next)))
-  ; (keymap-set prog-mode-map "<f11>"
-  ;             (lambda ()
-  ;               (interactive)
-  ;               (dape-step-in)))
-  ; (keymap-set prog-mode-map "S-<f11>"
-  ;             (lambda ()
-  ;               (interactive)
-  ;               (dape-step-out)))
-  )
+  :ensure t)
 
 ;; AUCTeX (Aalborg University Center TeX, Mode for TeX editing)
 (use-package auctex
@@ -311,7 +306,5 @@
 ;; installed for orgmode cdlatex plugin)
 (use-package cdlatex
   :ensure t)
-
-(put 'dired-find-alternate-file 'disabled nil)
 
 ;;; init.el ends here
