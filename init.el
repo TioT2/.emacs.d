@@ -57,9 +57,11 @@
   (add-to-list 'auto-mode-alist
                '("\\.cppm\\'" . c++-mode))
 
+  (pixel-scroll-precision-mode t)
+
   ;; Set some default editing parameters
   (setq-default
-   scroll-margin           3  ; Set margin for scrolling
+   scroll-margin           0  ; Set margin for scrolling
    scroll-conservatively 101  ; Disable scroll 'jumping'
    indent-tabs-mode      nil  ; Indent by spaces (instead of tabs)
                                 ; (HOW???)
@@ -102,6 +104,17 @@
   ;;       '((rust-mode . rust-ts-mode)
   ;;         (c-mode . c-ts-mode)))
   )
+
+;; TETRIS (built-in game)
+(use-package tetris
+  :ensure t
+  :config
+
+  ;; Define VIM-style bindings for tetris
+  (define-key tetris-mode-map (kbd "h") #'tetris-move-left)
+  (define-key tetris-mode-map (kbd "j") #'tetris-move-down)
+  (define-key tetris-mode-map (kbd "k") #'tetris-rotate-next)
+  (define-key tetris-mode-map (kbd "l") #'tetris-move-right))
 
 ;; EVIL (Extensible VI Layer, e.g. vim-style keybindings)
 (use-package evil
@@ -167,6 +180,18 @@
 
   (add-hook 'prog-mode-hook (lambda () (repeat-mode))))
 
+;; Font highlight mode
+(use-package font-lock
+  :ensure nil
+  :config
+
+  ;; Highlight defer as a keyword and nullptr as NULL
+  (font-lock-add-keywords
+   'c-mode '(("\\<defer\\>" . 'font-lock-keyword-face)
+             ("\\<constexpr\\>" . 'font-lock-keyword-face)
+             ("\\<nullptr\\>" . 'font-lock-constant-face)))
+  )
+
 ;; Autocomplete
 (use-package corfu
   :ensure t
@@ -198,6 +223,7 @@
   :ensure t
   :config
   (ivy-mode t)
+  (setq-default ivy-use-selectable-prompt t)
   (setq-default ivy-height 24))
 
 ;; IVY-based isearch alternative
@@ -233,6 +259,12 @@
 ;; Lean4-specific package (maintained fork of lean4-mode)
 (use-package nael
   :ensure t)
+
+;; CHICKEN Scheme specific package
+(use-package geiser-chicken
+  :ensure t
+  :config
+  (setq-default geiser-chicken-binary "chicken-csi"))
 
 (defun setup-rust-mode ()
   "All rust-* modes configuration function"
