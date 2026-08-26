@@ -208,16 +208,6 @@
   (setopt corfu-auto t)
   (setopt corfu-popupinfo-delay '(1.0 . 0.33)))
 
-;; CORFU support for terminal. Note: This package **must** be removed after
-;; switch on EMACS 31 (required functionality will be available out of the box)
-(use-package corfu-terminal
-  :ensure t
-  :after corfu
-  :config
-  ;; Enable terminal mode for non-graphic (e.g. terminal) displays
-  (unless (display-graphic-p)
-    (corfu-terminal-mode t)))
-
 ;; Completion package
 (use-package ivy
   :ensure t
@@ -233,16 +223,6 @@
 ;; IVY-based replacements for standard EMACS commands (comparable with HELM ones)
 (use-package counsel
   :ensure t)
-
-;; Package for CommonLisp development (SLIME improved alternative)
-(use-package sly
-  :ensure t
-  :config
-  (add-hook 'lisp-mode-hook
-            (lambda ()
-              (sly-mode)))
-  (setq inferior-lisp-program "sbcl")
-  (sly-setup))
 
 ;; Rust-specific package
 (use-package rust-mode
