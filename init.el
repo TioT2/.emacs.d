@@ -11,7 +11,7 @@
   "Ignore some EGLOT server capabilities"
   (append-to-list 'eglot-ignored-server-capabilities caps t))
 
-;;; Package configuraiton
+;;; Global configuration
 
 ;; EMACS (Editor MACroS, configuration 'root')
 (use-package emacs
@@ -57,7 +57,7 @@
   (add-to-list 'auto-mode-alist
                '("\\.cppm\\'" . c++-mode))
 
-  (pixel-scroll-precision-mode t)
+  ; (pixel-scroll-precision-mode t)
 
   ;; Set some default editing parameters
   (setq-default
@@ -159,6 +159,9 @@
   :ensure t
   :config
 
+  ;; Scale latex previews
+  (plist-put org-format-latex-options  :scale 1.5)
+
   ;; Enable visual lines in orgmode
   (add-hook 'org-mode-hook
             (lambda ()
@@ -171,7 +174,7 @@
 
   ;; Add cabal files to project root markers
   (setq project-vc-extra-root-markers
-        '("*.cabal")))
+        '("*.cabal" "Project.toml" "fpm.toml")))
 
 ;; Package for key repeat
 (use-package repeat
@@ -189,8 +192,7 @@
   (font-lock-add-keywords
    'c-mode '(("\\<defer\\>" . 'font-lock-keyword-face)
              ("\\<constexpr\\>" . 'font-lock-keyword-face)
-             ("\\<nullptr\\>" . 'font-lock-constant-face)))
-  )
+             ("\\<nullptr\\>" . 'font-lock-constant-face))))
 
 ;; Autocomplete
 (use-package corfu
@@ -227,6 +229,36 @@
 ;; Rust-specific package
 (use-package rust-mode
   :ensure t)
+
+;; Julia support
+(use-package julia-mode
+  :ensure t)
+
+;; Eglot <-> Julia LSP compatibility layer
+(use-package eglot-jl
+  :ensure t
+  :after julia-mode
+  :config
+  (eglot-jl-init))
+
+;; Setup fortran90+ mode
+(use-package f90
+  :ensure nil
+  :config
+
+  ;; some useful thgs
+  (setq-default f90-auto-keyword-case 'downcase-word)
+  (setq-default f90-smart-end 'blink)
+
+  ;; setup fortran basic indent levels to 4 and not to wtf emacs does
+  (let ((base-indent 4))
+    (setq-default
+     f90-do-indent base-indent
+     f90-if-indent base-indent
+     f90-type-indent base-indent
+     f90-program-indent base-indent
+     f90-critical-indent base-indent
+     f90-continuation-indent base-indent)))
 
 ;; Haskell-specific package
 (use-package haskell-mode
@@ -265,6 +297,10 @@
   ;; Kill eglot after last buffer killed
   (setopt eglot-autoshutdown t)
 
+  ;; (when (package-installed-p 'corfu)
+  ;;   (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
+  ;;   (advice-add 'eglot-completion-at-point :around #'cape-wrap-noninterruptible))
+
   ;; Add ~/.ghcup/bin to path
   (let ((ghcup-path (format "%s%s" (getenv "HOME") "/.ghcup/bin")))
     (add-to-list 'exec-path ghcup-path)
@@ -273,6 +309,10 @@
   ;; Bridge 'haskell-mode' and 'eglot'
   (add-to-list 'eglot-server-programs
                '(haskell-mode . ("haskell-language-server-wrapper" "--lsp")))
+
+  ;; Bridge 'fortls' and 'eglot'
+  (add-to-list 'eglot-server-programs
+               '(f90-mode . ("fortls" "--notify_init" "--hover_signature" "--nthreads=4")))
 
   ;; Disable header insertion
   (add-to-list 'eglot-server-programs
@@ -295,6 +335,14 @@
   ;; Configure Rust language
   (add-hook 'rust-mode-hook 'setup-rust-mode)
   (add-hook 'rust-ts-mode-hook 'setup-rust-mode)
+
+  ;; Enlarge time for julia JIT
+  (add-hook 'julia-mode-hook
+            (lambda ()
+              "Julia language hook"
+              (setq eglot-connect-timeout 300)
+              ; (ignore-eglot-server-capabilities)
+              ))
 
   ;; Configure Haskell language
   (add-hook 'haskell-mode-hook
