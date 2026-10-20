@@ -1,17 +1,8 @@
 ;;; init.el --- TioT2 Emacs configuration main file -*- lexical-binding: t; -*-
 
-;;; Some useful functions
 
-(defun append-to-list (list values &optional append compare-fn)
-  "Perform add-to-list for all values from another list"
-  (dolist (val values)
-    (add-to-list list val append compare-fn)))
+;;; Emacs built-in and fundamental
 
-(defun ignore-eglot-server-capabilities (&rest caps)
-  "Ignore some EGLOT server capabilities"
-  (append-to-list 'eglot-ignored-server-capabilities caps t))
-
-;;; Global configuration
 
 ;; EMACS (Editor MACroS, configuration 'root')
 (use-package emacs
@@ -43,21 +34,10 @@
   ;; Disable outdate american typist convention
   (setopt sentence-end-double-space nil)
 
-  ;; Disable rust-analyzer inactive code disgnostics
-  (setq-default eglot-workspace-configuration
-                '(:rust-analyzer
-                  (:diagnostics (:disabled ["inactive-code"]))))
-
   ;; Display line numbers in programming-related modes
   (add-hook 'prog-mode-hook (lambda ()
                               (column-number-mode)
                               (display-line-numbers-mode)))
-
-  ;; Add cppm files to c++-mode
-  (add-to-list 'auto-mode-alist
-               '("\\.cppm\\'" . c++-mode))
-
-  ; (pixel-scroll-precision-mode t)
 
   ;; Set some default editing parameters
   (setq-default
@@ -80,75 +60,15 @@
           ("nongnu"       . 20)
           ("melpa-stable" . 10))))
 
-;; DIRED (DIRectory EDitor, EMACS feature)
-(use-package dired
-  :config
-  (put 'dired-find-alternate-file 'disabled nil))
-
 ;; ELDOC (ELisp DOCumentation)
 (use-package eldoc
   :config
   (setopt eldoc-echo-area-use-multiline-p t))
 
-;; Tree-sitter configuration
-(use-package treesit
+;; DIRED (DIRectory EDitor, EMACS feature)
+(use-package dired
   :config
-
-  ;; ;; Set tree-sitter source files
-  ;; (setq treesit-language-source-alist
-  ;;       '(
-  ;;         ))
-
-  ;; ;; Remap Rust and C major modes to the tree-sitter counterparts
-  ;; (setq major-mode-remap-alist
-  ;;       '((rust-mode . rust-ts-mode)
-  ;;         (c-mode . c-ts-mode)))
-  )
-
-;; TETRIS (built-in game)
-(use-package tetris
-  :ensure t
-  :config
-
-  ;; Define VIM-style bindings for tetris
-  (define-key tetris-mode-map (kbd "h") #'tetris-move-left)
-  (define-key tetris-mode-map (kbd "j") #'tetris-move-down)
-  (define-key tetris-mode-map (kbd "k") #'tetris-rotate-next)
-  (define-key tetris-mode-map (kbd "l") #'tetris-move-right))
-
-;; EVIL (Extensible VI Layer, e.g. vim-style keybindings)
-(use-package evil
-  :ensure t
-  :config
-
-  ;; Enable EVIL keymap for programming modes only
-  (evil-mode t)
-  (setopt evil-default-state 'emacs)
-  (add-to-list 'evil-normal-state-modes 'prog-mode)
-
-  ;; Remap ':q' and ':wq' commands to not terminate EMACS instance
-  (evil-ex-define-cmd "q" 'kill-current-buffer)
-  (evil-ex-define-cmd "wq" (lambda ()
-                             (interactive)
-                             (save-buffer)
-                             (kill-current-buffer)))
-
-  ;; Make EMACS to have correct tabs (in these modes)
-  (evil-define-key 'insert c-mode-map (kbd "TAB") 'tab-to-tab-stop)
-  (evil-define-key 'insert c++-mode-map (kbd "TAB") 'tab-to-tab-stop)
-  (evil-define-key 'insert rust-mode-map (kbd "TAB") 'tab-to-tab-stop)
-  (evil-define-key 'insert rust-ts-mode-map (kbd "TAB") 'tab-to-tab-stop)
-
-  ;; Set vi-style search module
-  (evil-select-search-module 'evil-search-module 'evil-search))
-
-
-;; EVILNC (VIM NerdCommenter package port)
-(use-package evil-nerd-commenter
-  :ensure t
-  :after evil
-  :config
-  (evilnc-default-hotkeys))
+  (put 'dired-find-alternate-file 'disabled nil))
 
 ;; MAGIT (git gui package)
 (use-package magit
@@ -176,6 +96,46 @@
   (setq project-vc-extra-root-markers
         '("*.cabal" "Project.toml" "fpm.toml")))
 
+
+;;; Keyboard input
+
+
+;; EVIL (Extensible VI Layer, e.g. vim-style keybindings)
+(use-package evil
+  :ensure t
+  :config
+
+  ;; Fix of EVIL bug
+  (defvar evil-mode-buffers '())
+
+  ;; Enable EVIL keymap for programming modes only
+  (evil-mode t)
+  (setopt evil-default-state 'emacs)
+  (add-to-list 'evil-normal-state-modes 'prog-mode)
+
+  ;; Remap ':q' and ':wq' commands to not terminate EMACS instance
+  (evil-ex-define-cmd "q" 'kill-current-buffer)
+  (evil-ex-define-cmd "wq" (lambda ()
+                             (interactive)
+                             (save-buffer)
+                             (kill-current-buffer)))
+
+  ;; Make EMACS to have correct tabs (in these modes)
+  (evil-define-key 'insert c-mode-map (kbd "TAB") 'tab-to-tab-stop)
+  (evil-define-key 'insert c++-mode-map (kbd "TAB") 'tab-to-tab-stop)
+  (evil-define-key 'insert rust-mode-map (kbd "TAB") 'tab-to-tab-stop)
+  (evil-define-key 'insert rust-ts-mode-map (kbd "TAB") 'tab-to-tab-stop)
+
+  ;; Set vi-style search module
+  (evil-select-search-module 'evil-search-module 'evil-search))
+
+;; EVILNC (VIM NerdCommenter package port)
+(use-package evil-nerd-commenter
+  :ensure t
+  :after evil
+  :config
+  (evilnc-default-hotkeys))
+
 ;; Package for key repeat
 (use-package repeat
   :ensure t
@@ -183,16 +143,9 @@
 
   (add-hook 'prog-mode-hook (lambda () (repeat-mode))))
 
-;; Font highlight mode
-(use-package font-lock
-  :ensure nil
-  :config
 
-  ;; Highlight defer as a keyword and nullptr as NULL
-  (font-lock-add-keywords
-   'c-mode '(("\\<defer\\>" . 'font-lock-keyword-face)
-             ("\\<constexpr\\>" . 'font-lock-keyword-face)
-             ("\\<nullptr\\>" . 'font-lock-constant-face))))
+;;; Autocompletion and better navigation
+
 
 ;; Autocomplete
 (use-package corfu
@@ -210,110 +163,70 @@
   (setopt corfu-auto t)
   (setopt corfu-popupinfo-delay '(1.0 . 0.33)))
 
-;; Completion package
-(use-package ivy
+;; VERTICO (VERTical Interactive COmpletion)
+(use-package vertico
   :ensure t
   :config
-  (ivy-mode t)
-  (setq-default ivy-use-selectable-prompt t)
-  (setq-default ivy-height 24))
+  (vertico-mode t))
 
-;; IVY-based isearch alternative
-(use-package swiper
-  :ensure t)
-
-;; IVY-based replacements for standard EMACS commands (comparable with HELM ones)
-(use-package counsel
-  :ensure t)
-
-;; Rust-specific package
-(use-package rust-mode
-  :ensure t)
-
-;; Julia support
-(use-package julia-mode
-  :ensure t)
-
-;; Eglot <-> Julia LSP compatibility layer
-(use-package eglot-jl
-  :ensure t
-  :after julia-mode
-  :config
-  (eglot-jl-init))
-
-;; Setup fortran90+ mode
-(use-package f90
-  :ensure nil
-  :config
-
-  ;; some useful thgs
-  (setq-default f90-auto-keyword-case 'downcase-word)
-  (setq-default f90-smart-end 'blink)
-
-  ;; setup fortran basic indent levels to 4 and not to wtf emacs does
-  (let ((base-indent 4))
-    (setq-default
-     f90-do-indent base-indent
-     f90-if-indent base-indent
-     f90-type-indent base-indent
-     f90-program-indent base-indent
-     f90-critical-indent base-indent
-     f90-continuation-indent base-indent)))
-
-;; Haskell-specific package
-(use-package haskell-mode
-  :ensure t)
-
-;; Markdown-specific package (In addition makes EGLOT able to parse markdown inputs)
-(use-package markdown-mode
-  :ensure t)
-
-;; Lean4-specific package (maintained fork of lean4-mode)
-(use-package nael
-  :ensure t)
-
-;; CHICKEN Scheme specific package
-(use-package geiser-chicken
+;; Orderless completion
+(use-package orderless
   :ensure t
   :config
-  (setq-default geiser-chicken-binary "chicken-csi"))
+  (add-to-list 'completion-styles 'orderless))
 
-(defun setup-rust-mode ()
-  "All rust-* modes configuration function"
-  (electric-pair-mode)
-  (eglot-ensure)
+;; Better completion annotations
+(use-package marginalia
+  :ensure t
+  :config
+  (marginalia-mode t))
 
-  ;; Disable auto-formatting and inlay hints
-  (ignore-eglot-server-capabilities
-   :documentOnTypeFormattingProvider
-   :inlayHintProvider))
+;; EMBARK (Emacs Mini-Buffer Actions Rooted in Keymaps)
+(use-package embark
+  :ensure t)
+
+;; Better menus (e.g. ivy's counsel replacement)
+(use-package consult
+  :ensure t
+  :config
+  (keymap-global-set "C-x b" 'consult-buffer))
+
+;; EMBARK and CONSULT integration
+(use-package embark-consult
+  :ensure t)
+
+
+;;; Language-specific configurations (languages + eglot + dape)
+
+
+(defun append-to-list (list values &optional append compare-fn)
+  "Perform add-to-list for all values from another list"
+  (dolist (val values)
+    (add-to-list list val append compare-fn)))
+
+(defun ignore-eglot-server-capabilities (&rest caps)
+  "Ignore some EGLOT server capabilities"
+  (append-to-list 'eglot-ignored-server-capabilities caps t))
 
 ;; EGLOT (Emacs polyGLOT, EMACS LSP client) package.
 (use-package eglot
   :ensure t
-  :after rust-mode haskell-mode markdown-mode
   :config
 
   ;; Kill eglot after last buffer killed
-  (setopt eglot-autoshutdown t)
+  (setopt eglot-autoshutdown t))
 
-  ;; (when (package-installed-p 'corfu)
-  ;;   (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
-  ;;   (advice-add 'eglot-completion-at-point :around #'cape-wrap-noninterruptible))
+;; DAPE (Debug Adapter Protocol for Emacs, DAP support extension)
+(use-package dape
+  :ensure t)
 
-  ;; Add ~/.ghcup/bin to path
-  (let ((ghcup-path (format "%s%s" (getenv "HOME") "/.ghcup/bin")))
-    (add-to-list 'exec-path ghcup-path)
-    (setenv "PATH" (format "%s:%s" ghcup-path (getenv "PATH"))))
+;; C/C++/... language mode
+(use-package cc-mode
+  :ensure t
+  :config
 
-  ;; Bridge 'haskell-mode' and 'eglot'
-  (add-to-list 'eglot-server-programs
-               '(haskell-mode . ("haskell-language-server-wrapper" "--lsp")))
-
-  ;; Bridge 'fortls' and 'eglot'
-  (add-to-list 'eglot-server-programs
-               '(f90-mode . ("fortls" "--notify_init" "--hover_signature" "--nthreads=4")))
-
+  ;; Eglot configuration
+  
   ;; Disable header insertion
   (add-to-list 'eglot-server-programs
                '((c-mode c++-mode) . ("clangd" "--header-insertion=never")))
@@ -332,19 +245,86 @@
                :documentOnTypeFormattingProvider
                :inlayHintProvider)))
 
+  ;; Add cppm files to c++-mode
+  (add-to-list 'auto-mode-alist
+               '("\\.cppm\\'" . c++-mode))
+
+  ;; Add C26 keywords
+  (font-lock-add-keywords
+   'c-mode '(("\\<defer\\>" . 'font-lock-keyword-face)
+             ("\\<constexpr\\>" . 'font-lock-keyword-face)
+             ("\\<nullptr\\>" . 'font-lock-constant-face))))
+
+;; Rust-specific package
+(use-package rust-mode
+  :ensure t
+  :config
   ;; Configure Rust language
   (add-hook 'rust-mode-hook 'setup-rust-mode)
-  (add-hook 'rust-ts-mode-hook 'setup-rust-mode)
+  (add-hook 'rust-ts-mode-hook 'setup-rust-mode))
 
-  ;; Enlarge time for julia JIT
+;; Julia support
+(use-package julia-mode
+  :ensure t
+  :config
+
+  ;; Disable eglot inlay hints, extend connection timeout
   (add-hook 'julia-mode-hook
             (lambda ()
-              "Julia language hook"
-              (setq eglot-connect-timeout 300)
-              ; (ignore-eglot-server-capabilities)
-              ))
+              "Julia language common hook"
 
-  ;; Configure Haskell language
+              (eglot-ensure)
+              (setq eglot-connect-timeout 300)
+              (ignore-eglot-server-capabilities
+               :inlayHintProvider))))
+
+;; Eglot <-> Julia LSP compatibility layer
+(use-package eglot-jl
+  :ensure t
+  :after julia-mode
+  :config
+  (eglot-jl-init))
+
+;; Setup fortran90+ mode
+(use-package f90
+  :ensure nil
+  :config
+
+  ;; Bridge 'fortls' and 'eglot'
+  (add-to-list 'eglot-server-programs
+               '(f90-mode . ("fortls" "--notify_init" "--hover_signature" "--nthreads=4")))
+
+  ;; some useful thgs
+  (setq-default f90-auto-keyword-case 'downcase-word)
+  (setq-default f90-smart-end 'blink)
+
+  ;; setup fortran basic indent levels to 4 and not to wtf emacs does
+  (let ((base-indent 4))
+    (setq-default
+     f90-do-indent base-indent
+     f90-if-indent base-indent
+     f90-type-indent base-indent
+     f90-program-indent base-indent
+     f90-critical-indent base-indent
+     f90-continuation-indent base-indent)))
+
+;; Haskell-specific package
+(use-package haskell-mode
+  :ensure t
+  :config
+
+  ;; eglot-related params
+
+  ;; Add ~/.ghcup/bin to path
+  (let ((ghcup-path (format "%s%s" (getenv "HOME") "/.ghcup/bin")))
+    (add-to-list 'exec-path ghcup-path)
+    (setenv "PATH" (format "%s:%s" ghcup-path (getenv "PATH"))))
+
+  ;; Bridge 'haskell-mode' and 'eglot'
+  (add-to-list 'eglot-server-programs
+               '(haskell-mode . ("haskell-language-server-wrapper" "--lsp")))
+
+  ;; Disable inlay hints
   (add-hook 'haskell-mode-hook
             (lambda ()
               "Haskell language hook"
@@ -354,9 +334,19 @@
               (ignore-eglot-server-capabilities
                :inlayHintProvider))))
 
-;; DAPE (Debug Adapter Protocol for Emacs, DAP support extension)
-(use-package dape
+;; Markdown-specific package (In addition makes EGLOT able to parse markdown inputs)
+(use-package markdown-mode
   :ensure t)
+
+;; Lean4-specific package (maintained fork of lean4-mode)
+(use-package nael
+  :ensure t)
+
+;; CHICKEN Scheme specific package
+(use-package geiser-chicken
+  :ensure t
+  :config
+  (setq-default geiser-chicken-binary "chicken-csi"))
 
 ;; AUCTeX (Aalborg University Center TeX, Mode for TeX editing)
 (use-package auctex
@@ -366,5 +356,42 @@
 ;; installed for orgmode cdlatex plugin)
 (use-package cdlatex
   :ensure t)
+
+(defun setup-rust-mode ()
+  "All rust-* modes configuration function"
+  (electric-pair-mode)
+  (eglot-ensure)
+
+  ;; Disable auto-formatting and inlay hints
+  (ignore-eglot-server-capabilities
+   :documentOnTypeFormattingProvider
+   :inlayHintProvider))
+
+
+;;; Games
+
+
+;; TETRIS (built-in game)
+(use-package tetris
+  :ensure t
+  :config
+
+  ;; Define VIM-style bindings for tetris
+  (define-key tetris-mode-map (kbd "h") #'tetris-move-left)
+  (define-key tetris-mode-map (kbd "j") #'tetris-move-down)
+  (define-key tetris-mode-map (kbd "k") #'tetris-rotate-next)
+  (define-key tetris-mode-map (kbd "l") #'tetris-move-right))
+
+;; SNAKE (built-in game)
+(use-package snake
+  :ensure t
+  :config
+
+  ;; Define VIM-style bindings for snake
+  (define-key snake-mode-map (kbd "h") #'snake-move-left)
+  (define-key snake-mode-map (kbd "j") #'snake-move-down)
+  (define-key snake-mode-map (kbd "k") #'snake-move-up)
+  (define-key snake-mode-map (kbd "l") #'snake-move-right))
+
 
 ;;; init.el ends here
